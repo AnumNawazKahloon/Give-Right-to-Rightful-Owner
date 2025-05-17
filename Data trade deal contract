@@ -8,7 +8,7 @@ address public owner ;
 uint256 )) tx;
 
 mapping ( address => bool ) public
-iot_registation ;
+user_registration ;
 
 mapping ( address => mapping ( address => DEPOSIT
 )) public iot_tx ;
@@ -17,10 +17,10 @@ mapping ( address => address []) public customer
 ;
 
 mapping ( address => uint256 []) public
-iot_data_hash ;
+user_data_hash ;
 
 mapping ( uint256 => IOT_DATA ) public
-iot_data_map ;
+user_data_map ;
 
 enum State { Deposited , Accepted , Rejected }
 
@@ -60,8 +60,8 @@ State progress ;
 
  modifier beIoT ( address addr ) {
     require (
-    iot_registation [ addr ],
-    " Only IoT device "
+    user_registation [ addr ],
+    " Only IoT user"
  );
  _;
  }
@@ -75,11 +75,11 @@ State progress ;
  }
 
  /* Admin */
-   function registerIoT ( address iot )
+   function registerUser ( address user )
    public
    onlyOwner ()
  
- iot_registation [ iot ] = true ;
+ user_registation [ user ] = true ;
    emit AddOneIoT ();
  }
 
@@ -95,10 +95,10 @@ State progress ;
    beIoT ( msg . sender )
  {
 
- iot_data_hash [ msg . sender ]. push ( data_hash )
+ user_data_hash [ msg . sender ]. push ( data_hash )
 ;
 
- iot_data_map [ data_hash ]=
+ user_data_map [ data_hash ]=
  IOT_DATA (
  {
    _hash : data_hash ,
@@ -113,23 +113,23 @@ State progress ;
 
  /* Exchange */
    function deposit (
-   address iot_address ,
+   address user_address ,
    uint256 data_hash ,
    string memory pk
  )
  public
  payable
-   beIoT ( iot_address )
+   beIoT ( user_address )
    notZero ( msg . value )
  {
  require (
-   iot_data_map [ data_hash ]. _price == msg
+   user_data_map [ data_hash ]. _price == msg
   . value ,
    " deposit should be equal to supposed
   price "
  );
 
- iot_tx [ iot_address ][ msg . sender ] = DEPOSIT
+ user_tx [ user_address ][ msg . sender ] = DEPOSIT
 ({
    data_hash : data_hash ,
    buyer_deposit : msg . value ,
@@ -138,7 +138,7 @@ State progress ;
 ’’,
  progress : State . Deposited
  });
-    customer [ iot_address ]. push ( msg . sender );
+    customer [ user_address ]. push ( msg . sender );
  }
 
  function deal (
@@ -146,14 +146,14 @@ State progress ;
    string memory encrypted_csk
    )
  public
-    beIoT ( msg . sender )
+    beUser ( msg . sender )
  {
-   uint amount = iot_tx [ msg . sender ][
+   uint amount = user_tx [ msg . sender ][
    buyer_address ]. buyer_deposit ;
-   iot_tx [ msg . sender ][ buyer_address ].
+   user_tx [ msg . sender ][ buyer_address ].
    data_encrypted_child_secret_key =
    encrypted_csk ;
-   iot_tx [ msg . sender ][ buyer_address ].
+   user_tx [ msg . sender ][ buyer_address ].
    progress = State . Accepted ;
 
  msg . sender . transfer ( amount ); // works in
@@ -161,13 +161,13 @@ javascript VM
  }
 
 
- function getCustomerList ( address iot_address
+ function getCustomerList ( address user_address
 )
  public
  view
  returns ( address [] memory )
  {
- address [] memory c = customer [ iot_address
+ address [] memory c = customer [ user_address
 ];
  return c;
  }
